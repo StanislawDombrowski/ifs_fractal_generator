@@ -1,0 +1,3 @@
+C:/dev/openGL_learning/build/CMakeFiles/main.dir
+C:/dev/openGL_learning/build/CMakeFiles/ALL_BUILD.dir
+C:/dev/openGL_learning/build/CMakeFiles/ZERO_CHECK.dir
