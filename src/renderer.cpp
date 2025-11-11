@@ -30,6 +30,23 @@ unsigned int Renderer::initVAO() {
     return VAO;
 }
 
+unsigned int Renderer::fillVBO(unsigned int VBO, std::vector<glm::vec4>& data) {
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(glm::vec4), data.data(), GL_STATIC_DRAW);
+    return VBO;
+}
+
+unsigned int Renderer::appendTransformToVBO(unsigned int VBO, std::vector<glm::mat4>& data) {
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, data.size() * sizeof(glm::mat4), data.data()); // Example: overwrite from start
+    return VBO;
+}
+
+void Renderer::InitVertexAttribPointer(unsigned int index, int size, unsigned int type, bool normalized, size_t stride, const void* pointer) {
+    glEnableVertexAttribArray(index);
+    glVertexAttribPointer(index, size, type, normalized ? GL_TRUE : GL_FALSE, static_cast<GLsizei>(stride), pointer);
+}
+
 pointRenderer::pointRenderer() {
     // Constructor implementation (if needed)
 }

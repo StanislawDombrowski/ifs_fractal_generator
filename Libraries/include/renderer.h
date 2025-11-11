@@ -16,7 +16,17 @@ public:
 
     unsigned int initVBO();
     unsigned int initVAO();
+
+    // Fill VBO with point data
+    unsigned int fillVBO(unsigned int VBO, std::vector<glm::vec4>& data);
+    // Append ifs data to an existing VBO
+    unsigned int appendTransformToVBO(unsigned int VBO, std::vector<glm::mat4>& data);
+
+    void InitVertexAttribPointer(unsigned int index, int size, unsigned int type, bool normalized, size_t stride, const void* pointer);
+
 };
+
+
 
 class pointRenderer : public Renderer {
 public:

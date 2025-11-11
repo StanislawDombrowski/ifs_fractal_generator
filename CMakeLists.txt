@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(openGL)
+project(ifs_fractals_generator)
 
 add_executable(main)
 

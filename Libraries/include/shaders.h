@@ -10,4 +10,4 @@
 std::string readShader(const char* filePath);
 
 unsigned int compileShader(const std::string& shaderSourceCStr, unsigned int shaderType);
-unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader);
+unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader, unsigned int geometryShader);

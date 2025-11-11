@@ -40,10 +40,11 @@ unsigned int compileShader(const std::string& shaderSourceCStr, unsigned int sha
     return shader;
 }
 
-unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader){
+unsigned int createShaderProgram(unsigned int vertexShader, unsigned int fragmentShader, unsigned int geometryShader){
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
+    glAttachShader(shaderProgram, geometryShader);
     glLinkProgram(shaderProgram);
 
     // Check for linking errors
