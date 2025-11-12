@@ -16,28 +16,18 @@ using glm::translate;
 using glm::scale;
 using glm::rotate;
 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "input.h"
 #include "shaders.h"
 #include "renderer.h"
+#include "ifs.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
 }  
-
-std::vector<glm::vec4> transformPoints(std::vector<glm::vec4> startPoints, std::vector<glm::mat4> transforms){
-    std::vector<glm::vec4> resault;
-    for(const auto& transform: transforms){
-        for(const auto& point: startPoints){
-            resault.push_back(transform * point);
-        }
-    }
-
-    // TODO: Remove duplicates?
-
-    return resault;
-}
 
 // Camera setup
 glm::vec3 cameraPos   = glm::vec3(0.5f, 0.25f, 1.0f); // Start centered on the fractal
@@ -114,6 +104,9 @@ int main(){
 
     glfwSetScrollCallback(window, scroll_callback);
 
+
+    input_variables variables;
+    variables.should_generate = false;
     Renderer renderer;
 
     // Points and matrix data:
@@ -121,54 +114,7 @@ int main(){
         glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
     };
 
-    // float trans1[] = {
-    //     -0.67f, -0.02f, 0.0f, 0.0f,
-    //     -0.18f, 0.81f, 0.0f, 10.0f,
-    //     0.0f, 0.0f, 1.0f, 0.0f,
-    //     0.0f, 0.0f, 0.0f, 1.0f
-    // };
-
-
-    // float trans2[] = {
-    //     0.4f, 0.4f, 0.0f, 0.0f,
-    //     -0.1f, 0.4f, 0.0f, 0.0f,
-    //     0.0f, 0.0f, 1.0f, 0.0f,
-    //     0.0f, 0.0f, 0.0f, 1.0f
-    // };
-
-    // float trans3[] = {
-    //     -0.4f, -0.4f, 0.0f, 0.0f,
-    //     -0.1f, 0.4f, 0.0f, 0.0f,
-    //     0.0f, 0.0f, 1.0f, 0.0f,
-    //     0.0f, 0.0f, 0.0f, 1.0f
-    // };
-
-    // float trans4[] = {
-    //     -0.1f, 0.0f, 0.0f, 0.0f,
-    //     0.44f, 0.44f, 0.0f, -2.0f,
-    //     0.0f, 0.0f, 1.0f, 0.0f,
-    //     0.0f, 0.0f, 0.0f, 1.0f
-    // };
-
-
-    glm::mat4 baseScale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.0f));
-
-    // Transformation 1: Scale by 0.5, then move to the bottom-left corner (no translation).
-    glm::mat4 transform1 = glm::translate(baseScale, glm::vec3(0.0f, 0.0f, 0.0f));
-
-    // Transformation 2: Scale by 0.5, then move to the bottom-right corner.
-    // The shrunken triangle's corner is at (0,0), we move it to (0.5, 0).
-    glm::mat4 transform2 = glm::translate(baseScale, glm::vec3(0.5f, 0.0f, 0.0f));
-
-    // Transformation 3: Scale by 0.5, then move to the top corner.
-    // The shrunken triangle's corner is at (0,0), we move it to (0.25, 0.5).
-    glm::mat4 transform3 = glm::translate(baseScale, glm::vec3(0.25f, 0.5f, 0.0f));
-
-    // Your shader expects an array of 4 matrices. We'll just make the fourth one
-    // the identity matrix so it does nothing.
-    glm::mat4 transform4 = glm::mat4(1.0f);
-
-    std::vector<glm::mat4> transforms = {transform1, transform2, transform3 ,transform4};
+    std::vector<glm::mat4> transforms = init_transforms("C:\\dev\\ifs-fractals\\transformations\\leaf.txt");
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
 
@@ -271,56 +217,14 @@ int main(){
         glUniformMatrix4fv(transformLoc, transforms.size(), GL_FALSE, glm::value_ptr(transforms[0]));
     }
 
-    GLuint query;
-    glGenQueries(1, &query);
-
-    // Disable rasterizer for the generation program
-    glEnable(GL_RASTERIZER_DISCARD);
-
     int points_in_buffer = points.size();
-    int read_idx = 0; // Index for the read index
-
     std::cout << "Starting generation with " << points_in_buffer << " points.\n";
 
+    int ITERATION_DEPTH = 1; // Number of iterations performing point generation
+    variables.num_generations = ITERATION_DEPTH;
+    int read_idx = generate_points(variables.num_generations, VAOs, tfos, generateProgram, points_in_buffer);
 
-    int ITERATION_DEPTH = 11; // Number of iterations performing point generation
-    // Accual generation calls:
-    for (int i = 0; i < ITERATION_DEPTH; i++)
-    {
-        int write_idx = 1 - read_idx; // Index for the write index
-
-        glBindVertexArray(VAOs[read_idx]);
-
-        glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfos[write_idx]);
-
-         if (i == ITERATION_DEPTH - 1) {
-            glBeginQuery(GL_PRIMITIVES_GENERATED, query);
-        }
-
-        // Perform the transformation feedback
-        glBeginTransformFeedback(GL_POINTS);
-        glDrawArrays(GL_POINTS, 0, points_in_buffer);
-        glEndTransformFeedback();
-
-        if (i == ITERATION_DEPTH - 1) {
-            glEndQuery(GL_PRIMITIVES_GENERATED);
-        }
-
-        points_in_buffer *= 4; // Number of points in buffer after 4 transformations
-        // Swap read index for next iteration
-        read_idx = 1 - read_idx;
-    }
-    
-    // --- FIX #3: Get the query result AFTER the loop ---
-    GLuint primitives_written = 0;
-    // This call will wait until the GPU is done and give you the real number.
-    glGetQueryObjectuiv(query, GL_QUERY_RESULT, &primitives_written);
-    std::cout << "GPU reported generating " << primitives_written << " points in the final iteration.\n";
-
-    // Reenable rasterizer
-    glDisable(GL_RASTERIZER_DISCARD);
-    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0); // Unbind the transform
-
+    std::cout << points_in_buffer << std::endl;
     // ------------------ Final Drawing Step ------------------------
 
 
@@ -332,7 +236,7 @@ int main(){
 
     glUseProgram(drawProgram); // Use the program for drawing
 
-
+    std::cout << variables.should_generate << std::endl;
     while (!glfwWindowShouldClose(window))
     {
         // Calculate the timings
@@ -341,7 +245,7 @@ int main(){
         lastFrame = currentFrame;
     
         // Input handling
-        processInput(window);
+        processInput(window, variables);
         processCameraInput(window, deltaTime);
 
         glClearColor(58.0f/255.0f, 61.0f/255.0f, 59.0f/255.0f, 1.0f);
@@ -364,13 +268,20 @@ int main(){
         int viewLoc = glGetUniformLocation(drawProgram, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
+        // Regenerate the points if needed
+        if(variables.should_generate){
+            read_idx = generate_points(variables.num_generations, VAOs, tfos, generateProgram, points_in_buffer);
+            variables.should_generate = false;
+        }
+        std::cout << variables.should_generate << std::endl;
         // Rendering
+        glUseProgram(drawProgram);
 
         glBindVertexArray(VAOs[read_idx]);
         glDrawArrays(GL_POINTS, 0, points_in_buffer);
         
         // Debug printing
-        std::cout << 1 - orthoSize << std::endl;
+        //std::cout << 1 - orthoSize << std::endl;
 
         glfwSwapBuffers(window);
         glfwPollEvents();

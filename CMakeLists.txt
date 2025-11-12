@@ -4,7 +4,7 @@ project(ifs_fractals_generator)
 
 add_executable(main)
 
-target_sources(main PRIVATE ${PROJECT_SOURCE_DIR}/src/glad.c ${PROJECT_SOURCE_DIR}/src/input.cpp ${PROJECT_SOURCE_DIR}/src/shaders.cpp 
+target_sources(main PRIVATE ${PROJECT_SOURCE_DIR}/src/glad.c ${PROJECT_SOURCE_DIR}/src/ifs.cpp ${PROJECT_SOURCE_DIR}/src/input.cpp ${PROJECT_SOURCE_DIR}/src/shaders.cpp 
 ${PROJECT_SOURCE_DIR}/src/renderer.cpp ${PROJECT_SOURCE_DIR}/src/main.cpp)
 target_include_directories(main PRIVATE ${PROJECT_SOURCE_DIR}/Libraries/include)
 add_library(glfw STATIC IMPORTED)
