@@ -1,9 +1,10 @@
 #include "ifs.h"
 
-int generate_points(int depth, unsigned int* VAOs, unsigned int* tfos, unsigned int program, int &num_points){
+int generate_points(int depth, unsigned int* VAOs, unsigned int* tfos, unsigned int program, int num_points){
     GLuint query;
     glGenQueries(1, &query);
 
+    std::cout << depth << std::endl;
     // Disable rasterizer for the generation program
     glEnable(GL_RASTERIZER_DISCARD);
     glUseProgram(program);

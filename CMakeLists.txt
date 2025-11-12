@@ -13,6 +13,7 @@ add_library(glm STATIC IMPORTED)
 if(CMAKE_SYSTEM MATCHES Linux)
 message(Linux Detected!)
 set_target_properties(glfw PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/Libraries/lib/libglfw3.a)
+set_target_properties(glm PROPERTIES IMPORTED_LOCATION ${PROJECT_SOURCE_DIR}/Libraries/lib/libglm.a)
 endif()
 
 if(CMAKE_SYSTEM MATCHES Windows)

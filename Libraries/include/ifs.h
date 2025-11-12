@@ -7,6 +7,11 @@
 #include <fstream>
 #include <vector>
 
-int generate_points(int depth, unsigned int* VAOs, unsigned int* tfos, unsigned int program, int &num_points);
+struct ifs_state{
+    int num_points;
+    unsigned int buffer_with_points;
+};
+
+int generate_points(int depth, unsigned int* VAOs, unsigned int* tfos, unsigned int program, int num_points);
 
 std::vector<glm::mat4> init_transforms(std::string matrix_source);
