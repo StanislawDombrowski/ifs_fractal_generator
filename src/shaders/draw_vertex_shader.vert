@@ -1,11 +1,11 @@
 #version 440 core
 
-layout(location = 0) in vec4 aPos;
+layout(location = 0) in dvec4 aPos;
 
-uniform mat4 projection;
-uniform mat4 view;
+uniform dmat4 projection;
+uniform dmat4 view;
 
 void main() {
     // Just pass the position through to the Geometry Shader
-    gl_Position = projection * view * aPos;
+    gl_Position = vec4(projection * view * aPos);
 }

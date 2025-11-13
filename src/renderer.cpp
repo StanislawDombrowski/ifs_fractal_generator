@@ -8,63 +8,33 @@ Renderer::~Renderer() {
     // Destructor implementation (if needed)
 }
 
-void Renderer::clear(float r, float g, float b, float a) {
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT);
+std::array<unsigned int, 2> Renderer::initVBOs() {
+    std::array<unsigned int, 2> VBOs;
+    glGenBuffers(2, VBOs.data());
+    return VBOs;
 }
 
-void Renderer::drawArrays(unsigned int mode, int first, int count) {
-    glDrawArrays(mode, first, count);
+std::array<unsigned int, 2> Renderer::initVAOs(const int MAX_POINTS, std::array<unsigned int, 2> VBOs) {
+    std::array<unsigned int, 2> VAOs;
+    glGenVertexArrays(2, VAOs.data());
+    for (size_t i = 0; i < 2; i++)
+    {
+        glBindVertexArray(VAOs[i]);
+        glBindBuffer(GL_ARRAY_BUFFER, VBOs[i]);
+
+        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::dvec4) * MAX_POINTS, nullptr, GL_DYNAMIC_DRAW);
+
+        glEnableVertexAttribArray(0);
+        glVertexAttribLPointer(0, 4, GL_DOUBLE, 0, (void*)0);
+    }
+    return VAOs;
 }
 
-unsigned int Renderer::initVBO() {
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    return VBO;
-}
-
-unsigned int Renderer::initVAO() {
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    return VAO;
-}
-
-unsigned int Renderer::fillVBO(unsigned int VBO, std::vector<glm::vec4>& data) {
+void Renderer::fillVBO(unsigned int VBO, std::vector<glm::dvec4> points){
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(glm::vec4), data.data(), GL_STATIC_DRAW);
-    return VBO;
+    glBufferSubData(GL_ARRAY_BUFFER, 0, points.size() * sizeof(glm::dvec4), points.data());
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-unsigned int Renderer::appendTransformToVBO(unsigned int VBO, std::vector<glm::mat4>& data) {
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, data.size() * sizeof(glm::mat4), data.data()); // Example: overwrite from start
-    return VBO;
-}
 
-void Renderer::InitVertexAttribPointer(unsigned int index, int size, unsigned int type, bool normalized, size_t stride, const void* pointer) {
-    glEnableVertexAttribArray(index);
-    glVertexAttribPointer(index, size, type, normalized ? GL_TRUE : GL_FALSE, static_cast<GLsizei>(stride), pointer);
-}
-
-pointRenderer::pointRenderer() {
-    // Constructor implementation (if needed)
-}
-
-pointRenderer::~pointRenderer() {
-    // Destructor implementation (if needed)
-}
-
-void pointRenderer::setPointSize(float size) {
-    glPointSize(size);
-}
-
-void pointRenderer::renderPoints(unsigned int VBO, std::vector<glm::vec3>& points) {
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    // Fill buffer with point data
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(glm::vec3), points.data(), GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-    drawArrays(GL_POINTS, 0, static_cast<int>(points.size()));
-}

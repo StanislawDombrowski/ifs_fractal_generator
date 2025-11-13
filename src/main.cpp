@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <array>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
@@ -15,7 +16,9 @@ using glm::vec3;
 using glm::radians;
 using glm::translate;
 using glm::scale;
-using glm::rotate;
+using glm::rotate; 
+using glm::dmat4; // double-precision matrix
+using glm::dvec4; // double-precision vector
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -25,49 +28,11 @@ using glm::rotate;
 #include "renderer.h"
 #include "ifs.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}  
 
-// Camera setup
-glm::vec3 cameraPos   = glm::vec3(0.5f, 0.25f, 1.0f); // Start centered on the fractal
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+double orthoSize = 4.0f;
+const double BASE_PAN_SPEED = 2.5f;
 
-// Timing for frame-rate independent movement
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
 
-float orthoSize = 4.0f;
-const float BASE_PAN_SPEED = 2.5f;
-
-void processCameraInput(GLFWwindow *window, float dt, input_variables &inputs, ifs_state &state)
-{
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-
-    const float cameraSpeed = BASE_PAN_SPEED * orthoSize * dt;
-    
-    // Pan Up
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraUp;
-    // Pan Down
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraUp;
-    // Pan Left
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-    // Pan Right
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-
-    const float zoomSensitivity = 0.90f;
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-        orthoSize *= zoomSensitivity;
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
-        orthoSize /= zoomSensitivity;
-}
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
@@ -88,15 +53,6 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
         orthoSize = 100.0f;
     }
 }
-
-// void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-// {
-//     if (key == GLFW_KEY_G && action == GLFW_PRESS)
-//     {
-//         variables.should_generate = true;
-//         variables.num_generations++;
-//     }
-// }
 
 int main(){
 
@@ -122,26 +78,25 @@ int main(){
     //glfwSetKeyCallback(window, key_callback);
 
     input_variables variableses;
+    Camera camera;
     ifs_state state;
-    variableses.should_generate = false;
     Renderer renderer;
 
     // Points and matrix data:
-    std::vector<glm::vec4> points = {
-        glm::vec4(0.0f, 0.0f, 0.0f, 1.0f),
+    std::vector<glm::dvec4> points = {
+        glm::dvec4(0.0, 0.0, 0.0, 1.0)
     };
-
-    std::vector<glm::mat4> transforms = init_transforms("/home/stanislaw/Documents/dev/ifs_fractal_generator/transformations/leaf.txt");
+    std::vector<glm::dmat4> transforms = init_transforms("../../transformations/sierpinski.txt", state);
 
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
 
     // Load and compile shaders for generation
-    const std::string vertexShaderSource = readShader("/home/stanislaw/Documents/dev/ifs_fractal_generator/src/shaders/vertex_shader.vert");
-    const std::string geometryShaderSource = readShader("/home/stanislaw/Documents/dev/ifs_fractal_generator/src/shaders/geometry.geom");
-    const std::string fragmentShaderSource = readShader("/home/stanislaw/Documents/dev/ifs_fractal_generator/src/shaders/fragment_shader.frag");
+    const std::string vertexShaderSource = readShader("../../src/shaders/vertex_shader.vert");
+    const std::string geometryShaderSource = readShader("../../src/shaders/geometry.geom");
+    const std::string fragmentShaderSource = readShader("../../src/shaders/fragment_shader.frag");
 
     // Shaders for drawing
-    const std::string drawVertexShaderSource = readShader("/home/stanislaw/Documents/dev/ifs_fractal_generator/src/shaders/draw_vertex_shader.vert");
+    const std::string drawVertexShaderSource = readShader("../../src/shaders/draw_vertex_shader.vert");
 
     // Compile vertex shader
     unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
@@ -152,13 +107,8 @@ int main(){
     unsigned int fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
 
     // Link shaders to create shader program
-    unsigned int generateProgram = glCreateProgram();
-    glAttachShader(generateProgram, vertexShader);
-    glAttachShader(generateProgram, geometryShader);
-    unsigned int drawProgram = glCreateProgram();
-    glAttachShader(drawProgram, drawVertexShader);
-    glAttachShader(drawProgram, fragmentShader);
-    glLinkProgram(drawProgram);
+    unsigned int generateProgram = createShaderProgram({vertexShader, geometryShader, fragmentShader});
+    unsigned int drawProgram = createShaderProgram({drawVertexShader, fragmentShader});
     // Individual shader cleanup
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -167,34 +117,15 @@ int main(){
     // ------------------ Generation of points part of program -------------------------
 
     // Generate buffers for ping-pong technique
-    unsigned int VAOs[2];
-    unsigned int VBOs[2];
-
-    glGenVertexArrays(2, VAOs);
-    glGenBuffers(2, VBOs);
-
-    const int MAX_POINTS = 1000000;
-
-    // Init buffer memory for all the data
-    for (size_t i = 0; i < 2; i++)
-    {
-        glBindVertexArray(VAOs[i]);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOs[i]);
-
-        glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4) * MAX_POINTS, nullptr, GL_DYNAMIC_DRAW);
-
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (void*)0);
-    }
+    const int MAX_POINTS = 50000000;
+    
+    std::array<unsigned int, 2> VBOs = renderer.initVBOs();
+    std::array<unsigned int, 2> VAOs = renderer.initVAOs(MAX_POINTS, VBOs);
     
     // Upload initial poinst to the buffer
-    glBindBuffer(GL_ARRAY_BUFFER, VBOs[0]);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * sizeof(glm::vec4), points.data());
+    renderer.fillVBO(VBOs[0], points);
 
-    GLenum err;
-    while((err = glGetError()) != GL_NO_ERROR) {
-        std::cerr << "OpenGL Error after initial upload: " << err << std::endl;
-    }   
+    state.VAOs = VAOs;
 
     // Generate the Transform Feedback Objects 
     unsigned int tfos[2];
@@ -215,34 +146,17 @@ int main(){
     glTransformFeedbackVaryings(generateProgram, 1, feedbackVaryings, GL_INTERLEAVED_ATTRIBS);
     glLinkProgram(generateProgram); // Relink the program required
 
-    GLint success;
-    glGetProgramiv(generateProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        char infoLog[512];
-        glGetProgramInfoLog(generateProgram, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
 
     // Using the generation program
     glUseProgram(generateProgram);
 
-    // Set uniforms for the program
-    int transformLoc = glGetUniformLocation(generateProgram, "transformations");
-    if (transformLoc == -1) {
-        std::cerr << "Could not find uniform 'transformations'!" << std::endl;
-    } else {
-        glUniformMatrix4fv(transformLoc, transforms.size(), GL_FALSE, glm::value_ptr(transforms[0]));
-    }
-
     state.num_points = points.size();
-    std::cout << "Starting generation with " << state.num_points << " points.\n";
+    state.num_generations = 1;
+    state.last_index = 0;
 
-    int ITERATION_DEPTH = 2; // Number of iterations performing point generation
-    variableses.num_generations = ITERATION_DEPTH;
-    int read_idx = generate_points(variableses.num_generations, VAOs, tfos, generateProgram, state.num_points);
-    state.num_points *= glm::pow(4, variableses.num_generations);
+    update_IFS_data(state, transforms, generateProgram);
 
-    std::cout << state.num_points << std::endl;
+    //state.last_index = generate_points(state.num_generations, state, tfos, generateProgram, 0);
     // ------------------ Final Drawing Step ------------------------
 
 
@@ -250,18 +164,43 @@ int main(){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    double lastFrame = 0.0;
+    double deltaTime = 0.0;
+    double fpsEMA = 0.0;      // smoothed fps
+    const double fpsAlpha = 0.1; // smoothing factor in [0,1]
+    
+    double fpsAccumTime = 0.0;
+    int fpsFrames = 0;
+
     glPointSize(1.0f);
 
     glUseProgram(drawProgram); // Use the program for drawing
-
-    bool g_key_was_pressed = false;
-    int press_counter = 0;
+    bool key_was_pressed = false;
     while (!glfwWindowShouldClose(window))
     {
+        /* ----------- DEBUG INFO ---------------*/
+
         // Calculate the timings
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        double now = glfwGetTime();
+        deltaTime = now - lastFrame;
+        lastFrame = now;
+
+        double fpsInstant = (deltaTime > 0.0) ? 1.0 / deltaTime : 0.0;
+        if (fpsEMA == 0.0) fpsEMA = fpsInstant;
+        else fpsEMA = fpsAlpha * fpsInstant + (1.0 - fpsAlpha) * fpsEMA;
+
+        fpsAccumTime += deltaTime;
+        fpsFrames += 1;
+
+        if (fpsAccumTime >= 1.0) {
+            double fpsAvg = fpsFrames / fpsAccumTime;
+            std::cout << "OpenGL Window | FPS: " + std::to_string((int)fpsAvg) +
+            " | smoothed: " + std::to_string((int)fpsEMA) +
+            " | frame ms: " + std::to_string(deltaTime * 1000.0) << std::endl;
+
+            fpsAccumTime = 0.0;
+            fpsFrames = 0;
+        }
 
         glClearColor(58.0f/255.0f, 61.0f/255.0f, 59.0f/255.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -271,43 +210,42 @@ int main(){
         glfwGetWindowSize(window, &width, &height);
         float aspectRatio = (float)width / (float)height;
 
-        glm::mat4 projection = glm::ortho(-orthoSize * aspectRatio, orthoSize * aspectRatio, -orthoSize, orthoSize, -1.0f, 1.0f);
+        glm::dmat4 projection = glm::ortho(-orthoSize * aspectRatio, orthoSize * aspectRatio, -orthoSize, orthoSize, -1.0, 1.0);
 
         // View: creates a matrix that "looks" from cameraPos to a target
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        glm::dmat4 view = glm::lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp);
+
+        glm::dmat4 identityMatrix = glm::dmat4(1.0);
 
         // 4. Upload Matrices to the Shader
         int projLoc = glGetUniformLocation(drawProgram, "projection");
-        glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        glUniformMatrix4dv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
         int viewLoc = glGetUniformLocation(drawProgram, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4dv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
         // Input handling
         processInput(window, variableses);
-        processCameraInput(window, deltaTime, variableses, state);
+        processCameraInput(window, deltaTime, variableses, state, camera, BASE_PAN_SPEED, orthoSize);
         // Regenerate the points if needed
         bool g_key_is_down = (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS);
-        if (g_key_is_down && !g_key_was_pressed)
+        if (g_key_is_down && !key_was_pressed)
         {
             // This block will now only execute ONCE per key press
-            variableses.num_generations++;
-            read_idx = generate_points(variableses.num_generations, VAOs, tfos, generateProgram, state.num_points);
-            state.num_points *= glm::pow(4, variableses.num_generations);
-            std::cout << "Generated points for generation: " << variableses.num_generations << std::endl;
+            state.num_generations++;
+            int new_read_idx = generate_points(1, state, tfos, generateProgram, state.last_index);
+            state.last_index = new_read_idx;
+            std::cout << "Generated points for generation: " << state.num_generations << std::endl;
+            std::cout << "Recorded number of points: " << state.num_points << std::endl;
         }
 
-        // if (g_key_is_down && !g_key_was_pressed) {
-        //     press_counter++;
-        //     std::cout << "Key 'G' pressed. Count: " << press_counter << std::endl;
-        // }
-
-        g_key_was_pressed = g_key_is_down;
+        key_was_pressed = g_key_is_down;
 
         // Rendering
         glUseProgram(drawProgram);
+        glDisable(GL_RASTERIZER_DISCARD);
 
-        glBindVertexArray(VAOs[read_idx]);
+        glBindVertexArray(VAOs[state.last_index]);
         glDrawArrays(GL_POINTS, 0, state.num_points);
         
         // Debug printing
