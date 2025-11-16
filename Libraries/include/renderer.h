@@ -18,6 +18,7 @@ public:
 
     std::array<unsigned int, 2> initVBOs();
     std::array<unsigned int, 2> initVAOs(const int MAX_POINTS, std::array<unsigned int, 2> VBOs);
+    std::array<unsigned int, 2> initTFOs(std::array<unsigned int, 2> VBOs);
 
     void fillVBO(unsigned int VBO, std::vector<glm::dvec4> points);
 };

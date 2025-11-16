@@ -16,45 +16,58 @@ std::string readShader(const char* filePath){
     return content;
 }
 
-unsigned int compileShader(const std::string& shaderSourceCStr, unsigned int shaderType){
-    unsigned int shader = glCreateShader(shaderType);
-    const char* shaderSource = shaderSourceCStr.c_str();
-    glShaderSource(shader, 1, &shaderSource, nullptr);
-    glCompileShader(shader);
+unsigned int compileShader(const std::string& source, GLenum type) {
+    unsigned int id = glCreateShader(type);
+    const char* src = source.c_str();
+    glShaderSource(id, 1, &src, nullptr);
+    glCompileShader(id);
 
-    // Check for shader compile errors
-    int success;
-    char infoLog[512];
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-    if (!success)
-    {
-        glGetShaderInfoLog(shader, 512, nullptr, infoLog);
-        if(shaderType == GL_VERTEX_SHADER){
-            std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-        } else if(shaderType == GL_FRAGMENT_SHADER){
-            std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-        } else {
-            std::cerr << "ERROR::SHADER::UNKNOWN_TYPE::COMPILATION_FAILED\n" << infoLog << std::endl;
-        }
+    // --- ERROR CHECKING ---
+    int result;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+        int length;
+        glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+        char* message = (char*)alloca(length * sizeof(char));
+        glGetShaderInfoLog(id, length, &length, message);
+        
+        std::cerr << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment/geometry") << " shader!" << std::endl;
+        std::cerr << message << std::endl;
+        
+        glDeleteShader(id);
+        return 0;
     }
-    return shader;
+
+    return id;
 }
 
-unsigned int createShaderProgram(std::vector<unsigned int> shaders){
-    unsigned int shaderProgram = glCreateProgram();
-    for(unsigned int shader: shaders){
-        glAttachShader(shaderProgram, shader);
+// A more robust function to create a shader program
+unsigned int createShaderProgram(const std::vector<unsigned int>& shaders) {
+    unsigned int program = glCreateProgram();
+    for (unsigned int shader : shaders) {
+        glAttachShader(program, shader);
     }
-    glLinkProgram(shaderProgram);
+    glLinkProgram(program);
 
-    // Check for linking errors
-    int success;
-    char infoLog[512];
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    // --- ERROR CHECKING ---
+    int result;
+    glGetProgramiv(program, GL_LINK_STATUS, &result);
+    if (result == GL_FALSE) {
+        int length;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        char* message = (char*)alloca(length * sizeof(char));
+        glGetProgramInfoLog(program, length, &length, message);
+
+        std::cerr << "Failed to link shader program!" << std::endl;
+        std::cerr << message << std::endl;
+
+        glDeleteProgram(program);
+        // You might also want to delete the individual shaders here
+        return 0;
     }
-    return shaderProgram;
+
+    // You can also validate the program, though it's often redundant with linking
+    // glValidateProgram(program);
+
+    return program;
 }

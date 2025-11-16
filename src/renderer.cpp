@@ -30,11 +30,30 @@ std::array<unsigned int, 2> Renderer::initVAOs(const int MAX_POINTS, std::array<
     return VAOs;
 }
 
+std::array<unsigned int, 2> Renderer::initTFOs(std::array<unsigned int, 2> VBOs){
+    std::array<unsigned int, 2> tfos;
+    glGenTransformFeedbacks(2, tfos.data());
+
+
+    // Set up transform feedback to capture data into the VBOs
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfos[0]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, VBOs[0]);
+
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, tfos[1]);
+    glBindBufferBase(GL_TRANSFORM_FEEDBACK_BUFFER, 0, VBOs[1]);
+
+    // Unbind the tfos
+    glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, 0);
+
+    return tfos;
+}
+
 void Renderer::fillVBO(unsigned int VBO, std::vector<glm::dvec4> points){
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferSubData(GL_ARRAY_BUFFER, 0, points.size() * sizeof(glm::dvec4), points.data());
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
 
 

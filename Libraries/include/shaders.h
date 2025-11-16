@@ -10,5 +10,5 @@
 
 std::string readShader(const char* filePath);
 
-unsigned int compileShader(const std::string& shaderSourceCStr, unsigned int shaderType);
-unsigned int createShaderProgram(std::vector<unsigned int> shaders);
+unsigned int compileShader(const std::string& source, GLenum type);
+unsigned int createShaderProgram(const std::vector<unsigned int>& shaders);
