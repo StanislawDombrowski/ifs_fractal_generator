@@ -66,7 +66,11 @@ std::vector<glm::dmat4> init_transforms(std::string matrix_source, ifs_state &st
 
     file.close();
 
-    state.num_of_transforms = indicies[0];
+    if (indicies.empty()) {
+        throw std::runtime_error("No data read from: " + std::string(matrix_source));
+    }   
+
+    state.num_of_transforms = indicies.at(0);
     std::vector<glm::dmat4> matrices;
 
     for (int j = 0; j < state.num_of_transforms; j++)

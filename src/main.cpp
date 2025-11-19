@@ -69,18 +69,18 @@ int main(){
     std::vector<glm::dvec4> points = {
         glm::dvec4(0.0, 0.0, 0.0, 1.0)
     };
-    std::vector<glm::dmat4> transforms = init_transforms("../../transformations/pyramid.txt", state);
+    std::vector<glm::dmat4> transforms = init_transforms("transformations/pyramid.txt", state);
 
 
     // Load and compile shaders for generation
-    const std::string vertexShaderSource = readShader("../../src/shaders/vertex_shader.vert");
-    const std::string geometryShaderSource = readShader("../../src/shaders/geometry.geom");
-    const std::string generationFragmentSource = readShader("../../src/shaders/generation_frag.frag");
+    const std::string vertexShaderSource = readShader("shaders/vertex_shader.vert");
+    const std::string geometryShaderSource = readShader("shaders/geometry.geom");
+    const std::string generationFragmentSource = readShader("src/shaders/generation_frag.frag");
 
-    const std::string fragmentShaderSource = readShader("../../src/shaders/fragment_shader.frag");
+    const std::string fragmentShaderSource = readShader("src/shaders/fragment_shader.frag");
 
     // Shaders for drawing
-    const std::string drawVertexShaderSource = readShader("../../src/shaders/draw_vertex_shader.vert");
+    const std::string drawVertexShaderSource = readShader("src/shaders/draw_vertex_shader.vert");
 
     // Compile vertex shader
     unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
@@ -137,7 +137,6 @@ int main(){
     // Unbind to keep a clean state
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-
     double lastFrame = 0.0;
     double deltaTime = 0.0;
     double fpsEMA = 0.0;      // smoothed fps

@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include <algorithm>
+#include <bits/stdc++.h>
 #include "ifs.h"
 
 struct Camera{
