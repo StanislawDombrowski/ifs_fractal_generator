@@ -7,7 +7,6 @@
 #include <glm/glm.hpp>
 
 #include <algorithm>
-#include <bits/stdc++.h>
 #include "ifs.h"
 
 struct Camera{
@@ -47,6 +46,18 @@ struct Camera{
 struct input_variables
 {
     bool should_generate = false;
+};
+
+class Input
+{
+private:
+
+public:
+    input_variables vars;
+    Camera camera;
+
+    Input();
+    ~Input();
 };
 
 void processInput(GLFWwindow *window, input_variables &variables);

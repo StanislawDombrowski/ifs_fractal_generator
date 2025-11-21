@@ -66,6 +66,10 @@ unsigned int createShaderProgram(const std::vector<unsigned int>& shaders) {
         return 0;
     }
 
+    for(unsigned int shader: shaders){
+        glDeleteShader(shader);
+    }
+
     // You can also validate the program, though it's often redundant with linking
     // glValidateProgram(program);
 

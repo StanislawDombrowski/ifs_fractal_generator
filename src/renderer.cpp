@@ -1,11 +1,31 @@
 #include "renderer.h"
 
-Renderer::Renderer() {
-    // Constructor implementation (if needed)
-}
+unsigned int Renderer::initShaders(std::vector<std::string> sourcesPath, std::vector<GLenum> types){
+    unsigned int shader;
 
-Renderer::~Renderer() {
-    // Destructor implementation (if needed)
+    std::vector<unsigned int> individuals;
+    individuals.reserve(sourcesPath.size());
+
+    std::vector<std::string> sources;
+    sources.reserve(sourcesPath.size());
+    for(std::string &source: sourcesPath){
+        sources.push_back(readShader(source.c_str()));
+    }
+
+    std::map<std::string, GLenum> pairs;
+
+    for (int i = 0; i < sourcesPath.size(); i++)
+    {
+        pairs.insert({sources.at(i), types.at(i)});
+    }
+    
+
+    for(std::string &source: sources){
+        individuals.push_back(compileShader(source, pairs.at(source)));
+    }
+
+    shader = createShaderProgram(individuals);
+    return shader;
 }
 
 std::array<unsigned int, 2> Renderer::initVBOs() {

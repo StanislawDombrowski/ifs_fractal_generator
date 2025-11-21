@@ -17,6 +17,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "application.h"
+
 #include "input.h"
 #include "shaders.h"
 #include "renderer.h"
@@ -24,40 +26,43 @@
 
 int main(){
 
-    glfwInit();
+    // glfwInit();
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Window", nullptr, nullptr);
-    if (window == nullptr){
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
+    // GLFWwindow* window = glfwCreateWindow(800, 600, "OpenGL Window", nullptr, nullptr);
+    // if (window == nullptr){
+    //     std::cout << "Failed to create GLFW window" << std::endl;
+    //     glfwTerminate();
+    //     return -1;
+    // }
 
-    glfwMakeContextCurrent(window);
+    // glfwMakeContextCurrent(window);
     
-    gladLoadGL();
-    glViewport(0, 0, 800, 600);
+    // gladLoadGL();
+    // glViewport(0, 0, 800, 600);
 
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // IMGUI_CHECKVERSION();
+    // ImGui::CreateContext();
+    // ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    // Set ImGui style
-    ImGui::StyleColorsDark();
+    // // Set ImGui style
+    // ImGui::StyleColorsDark();
 
-    const char* glsl_version = "#version 440"; // Match your shader version
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    // const char* glsl_version = "#version 440"; // Match your shader version
+    // ImGui_ImplGlfw_InitForOpenGL(window, true);
+    // ImGui_ImplOpenGL3_Init(glsl_version);
 
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+
+    Application app;
+    GLFWwindow* window = app.Init();
 
     input_variables variableses;
     Camera camera;
-    ifs_state state;
+    IFS ifs;
     Renderer renderer;
 
     glfwSetWindowUserPointer(window, &camera);
@@ -66,35 +71,51 @@ int main(){
     glfwSetScrollCallback(window, scroll_callback);
 
     // Points and matrix data:
-    std::vector<glm::dvec4> points = {
+    ifs.data.points = {
         glm::dvec4(0.0, 0.0, 0.0, 1.0)
     };
-    std::vector<glm::dmat4> transforms = init_transforms("transformations/pyramid.txt", state);
+    ifs.data.transforms = ifs.init_transforms("transformations/sierpinski.txt", ifs.state);
 
+    std::vector<std::string> sources = {
+        "src/shaders/fragment_shader.frag",
+        "src/shaders/draw_vertex_shader.vert"
+    };
 
-    // Load and compile shaders for generation
-    const std::string vertexShaderSource = readShader("shaders/vertex_shader.vert");
-    const std::string geometryShaderSource = readShader("shaders/geometry.geom");
-    const std::string generationFragmentSource = readShader("src/shaders/generation_frag.frag");
+    std::vector<std::string> generateSources = {
+        "src/shaders/generation_frag.frag",
+        "src/shaders/vertex_shader.vert",
+        "src/shaders/geometry.geom"
+    };
 
-    const std::string fragmentShaderSource = readShader("src/shaders/fragment_shader.frag");
+    std::vector<GLenum> types = {GL_FRAGMENT_SHADER, GL_VERTEX_SHADER};
+    std::vector<GLenum> generateTypes = {GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, GL_GEOMETRY_SHADER};
 
-    // Shaders for drawing
-    const std::string drawVertexShaderSource = readShader("src/shaders/draw_vertex_shader.vert");
+    renderer.shader = renderer.initShaders(sources, types);
+    ifs.generationShader = ifs.initShaders(generateSources, generateTypes);
+
+    // // Load and compile shaders for generation
+    // const std::string vertexShaderSource = readShader("src/shaders/vertex_shader.vert");
+    // const std::string geometryShaderSource = readShader("src/shaders/geometry.geom");
+    // const std::string generationFragmentSource = readShader("src/shaders/generation_frag.frag");
+
+    // const std::string fragmentShaderSource = readShader("src/shaders/fragment_shader.frag");
+
+    // // Shaders for drawing
+    // const std::string drawVertexShaderSource = readShader("src/shaders/draw_vertex_shader.vert");
 
     // Compile vertex shader
-    unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
-    unsigned int drawVertexShader = compileShader(drawVertexShaderSource, GL_VERTEX_SHADER);
-    // Compile geometry shader
-    unsigned int geometryShader = compileShader(geometryShaderSource, GL_GEOMETRY_SHADER);
-    // Compile fragment shader
-    unsigned int fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
-    unsigned int generationFragment = compileShader(generationFragmentSource, GL_FRAGMENT_SHADER);
+    // unsigned int vertexShader = compileShader(vertexShaderSource, GL_VERTEX_SHADER);
+    // unsigned int drawVertexShader = compileShader(drawVertexShaderSource, GL_VERTEX_SHADER);
+    // // Compile geometry shader
+    // unsigned int geometryShader = compileShader(geometryShaderSource, GL_GEOMETRY_SHADER);
+    // // Compile fragment shader
+    // unsigned int fragmentShader = compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
+    // unsigned int generationFragment = compileShader(generationFragmentSource, GL_FRAGMENT_SHADER);
 
-    // Link shaders to create shader program
-    unsigned int generateProgram = createShaderProgram({vertexShader, geometryShader, generationFragment});
-    unsigned int drawProgram = createShaderProgram({drawVertexShader, fragmentShader});
-    // Individual shader cleanup
+    // // Link shaders to create shader program
+    // unsigned int generateProgram = createShaderProgram({vertexShader, geometryShader, generationFragment});
+    // unsigned int drawProgram = createShaderProgram({drawVertexShader, fragmentShader});
+    // // Individual shader cleanup
     // glDeleteShader(vertexShader);
     // glDeleteShader(fragmentShader);
     // glDeleteShader(geometryShader);
@@ -103,32 +124,21 @@ int main(){
 
     // Generate buffers for ping-pong technique
     const int MAX_POINTS = 50000000;
-    
-    std::array<unsigned int, 2> VBOs = renderer.initVBOs();
-    std::array<unsigned int, 2> VAOs = renderer.initVAOs(MAX_POINTS, VBOs);
-    
-    // Upload initial poinst to the buffer
-    renderer.fillVBO(VBOs[0], points);
 
-    state.VAOs = VAOs;
-
-    // Generate the Transform Feedback Objects 
-    std::array<unsigned int, 2> tfos = renderer.initTFOs(VBOs);
+    unsigned int generation = 0;
 
     // Tell the geometry shader which data to capture
     const char* feedbackVaryings[] = {"out_Pos"}; // Name of the variable to capture
-    glTransformFeedbackVaryings(generateProgram, 1, feedbackVaryings, GL_INTERLEAVED_ATTRIBS);
-    glLinkProgram(generateProgram); // Relink the program required
+    glTransformFeedbackVaryings(ifs.generationShader, 1, feedbackVaryings, GL_INTERLEAVED_ATTRIBS);
+    glLinkProgram(ifs.generationShader); // Relink the program required
 
 
     // Using the generation program
-    glUseProgram(generateProgram);
+    glUseProgram(ifs.generationShader);
 
-    state.num_points = points.size();
-    state.num_generations = 1;
-    state.last_index = 0;
+    ifs.init_genesis(ifs.state, ifs.data.points);
 
-    update_IFS_data(state, transforms, generateProgram);
+    ifs.update_IFS_data(ifs.state, ifs.data.transforms, ifs.generationShader);
 
     //state.last_index = generate_points(state.num_generations, state, tfos, generateProgram, 0);
     // ------------------ Final Drawing Step ------------------------
@@ -147,14 +157,13 @@ int main(){
 
     glPointSize(1.0f);
 
-    glLinkProgram(drawProgram);
-    glUseProgram(drawProgram); // Use the program for drawing
+    glLinkProgram(renderer.shader);
+    glUseProgram(renderer.shader); // Use the program for drawing
 
     bool key_was_pressed = false;
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
-
 
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -211,13 +220,12 @@ int main(){
                 ImGuiWindowFlags_NoCollapse |
                 ImGuiWindowFlags_NoTitleBar);
 
-            ImGui::Text("Generations: %d", state.num_generations);
-            ImGui::Text("Total Points: %d", state.num_points);
+            ImGui::Text("Generations: %d", generation);
+            ImGui::Text("Total Points: %d", ifs.state.history.at(generation).point_count);
             ImGui::Separator();
             if (ImGui::Button("Generate Next Level")) {
-                state.num_generations++;
-                int new_read_idx = generate_points(1, state, tfos.data(), generateProgram, state.last_index);
-                state.last_index = new_read_idx;
+                generation++;
+                ifs.generate_points(1, ifs.state, ifs.generationShader);
             }
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
@@ -299,18 +307,37 @@ int main(){
             view = glm::lookAt(camera.cameraPos,
                             camera.cameraPos + camera.cameraFront,
                             camera.cameraUp);
-                        processCameraInput(window, deltaTime, variableses, state, camera);
+                        processCameraInput(window, deltaTime, variableses, ifs.state, camera);
 
-            glUseProgram(drawProgram);
-            glUniformMatrix4dv(glGetUniformLocation(drawProgram, "projection"),
+            glUseProgram(renderer.shader);
+            glUniformMatrix4dv(glGetUniformLocation(renderer.shader, "projection"),
                             1, GL_FALSE, glm::value_ptr(projection));
-            glUniformMatrix4dv(glGetUniformLocation(drawProgram, "view"),
+            glUniformMatrix4dv(glGetUniformLocation(renderer.shader, "view"),
                             1, GL_FALSE, glm::value_ptr(view));
 
-            // Draw your points
-            glBindVertexArray(VAOs[state.last_index]);
-            glDrawArrays(GL_POINTS, 0, state.num_points);
+            // 1. Estimate how much screen space the fractal covers (rough approximation)
+            // This depends on your camera distance and projection.
+            // As distance goes up, detail needed goes down.
+            // Adjust 'detail_factor' until it feels right.
+            double detail_factor = 1.0; 
+            double target_points = (1.0 / (camera.orthoSize * camera.orthoSize)) * 5000000.0 * detail_factor;
 
+            // 2. Find the generation in history that is closest to 'target_points'
+            int draw_index = 0;
+            for(int i = 0; i < ifs.state.history.size(); i++) {
+                if(ifs.state.history[i].point_count > target_points) {
+                    draw_index = i;
+                    break; // Found a generation with enough detail
+                }
+                draw_index = i; // Default to the highest available if we never exceed target
+            }
+            
+            // Draw your points
+            glDisable(GL_BLEND); 
+            glDisable(GL_DEPTH_TEST);
+            std::cout << draw_index << std::endl;
+            glBindVertexArray(ifs.state.history[draw_index].vao);
+            glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
             // /* ----------- DEBUG INFO ---------------*/
 
             double now = glfwGetTime();
@@ -319,7 +346,7 @@ int main(){
 
             processInput(window, variableses);
             if (!camera.perspective) {
-                processCameraInput(window, deltaTime, variableses, state, camera);
+                processCameraInput(window, deltaTime, variableses, ifs.state, camera);
             } else {
                 processCameraInput3D(window, ImGui::GetIO(), deltaTime, camera);
             }
