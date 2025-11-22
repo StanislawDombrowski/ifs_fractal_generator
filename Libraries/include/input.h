@@ -1,15 +1,19 @@
 #pragma once
 
 #include <glad/glad.h>
-
 #include <GLFW/glfw3.h>
-#include "imgui.h"
 #include <glm/glm.hpp>
 
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <algorithm>
-#include "ifs.h"
-#include "UI.h"
-#include "renderer.h"
+
+class UI;       
+class Renderer; 
+class IFS;
 
 struct Camera{
     // Camera setup
@@ -64,10 +68,10 @@ public:
     ~Input();
 
     void processInput(GLFWwindow *window, input_variables &variables);
-    void processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera);
+    void processCameraInput(GLFWwindow *window, double dt, IFS &state, Camera &camera);
     void processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Camera& cam);
 
-    void processCamera(GLFWwindow* window, UI ui, Renderer renderer);
+    void processCamera(GLFWwindow* window, UI& ui, Renderer& renderer);
 
     static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -75,7 +79,7 @@ public:
 
     void setCallbacks(GLFWwindow* window);
 
-    void handleEvents(GLFWwindow *window, IFS ifs, Renderer renderer, UI ui);
+    void handleEvents(GLFWwindow *window, IFS ifs, Renderer &renderer, UI &ui);
 };
 
 

@@ -1,4 +1,7 @@
 #include "UI.h"
+#include "input.h"    
+#include "ifs.h"      
+#include "renderer.h" 
 
 UI::UI(){
     window_flags = ImGuiWindowFlags_NoDocking |
@@ -15,8 +18,9 @@ UI::~UI(){
 
 }
 
-const ImGuiViewport* UI::initUI(){
-    const ImGuiViewport* vp = ImGui::GetMainViewport();
+ImGuiViewport* UI::initUI(){
+
+        ImGuiViewport* vp = ImGui::GetMainViewport();
 
         ImGui::SetNextWindowPos(vp->WorkPos);
         ImGui::SetNextWindowSize(vp->WorkSize);
@@ -40,7 +44,25 @@ const ImGuiViewport* UI::initUI(){
         return vp;
 }
 
-void UI::drawFrame(IFS ifs, Renderer renderer, Input input, GLFWwindow* window){
+void UI::BeginFrame() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    vp = initUI();
+}
+
+void UI::EndFrame() {
+    // 3. Finalize the frame logic
+    ImGui::Render();
+
+    // 4. Draw the UI data to the screen
+    // Note: We don't clear the screen here (glClear), 
+    // because your Renderer class usually does that before this is called.
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void UI::drawFrame(IFS &ifs, Renderer &renderer, Input &input, GLFWwindow* window){
         if (!built)
         {
             built = true;
@@ -105,7 +127,7 @@ void UI::drawFrame(IFS ifs, Renderer renderer, Input input, GLFWwindow* window){
             
 }
 
-void UI::renderUI(IFS ifs, Renderer renderer, Input input, GLFWwindow* window)
+void UI::renderUI(IFS &ifs, Renderer &renderer, Input &input, GLFWwindow* window)
 {
     initUI();
     drawFrame(ifs, renderer, input, window);

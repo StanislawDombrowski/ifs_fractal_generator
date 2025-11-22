@@ -65,6 +65,8 @@ int main(){
     UI ui;
     Input inputs;
 
+    ui.vp = ui.initUI();
+
     // glfwSetWindowUserPointer(window, &camera);
 
     // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);     

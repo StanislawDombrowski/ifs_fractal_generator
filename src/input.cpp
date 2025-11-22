@@ -1,4 +1,7 @@
 #include "input.h"
+#include "UI.h"       
+#include "renderer.h" 
+#include "ifs.h"      
 
 Input::Input()
 {
@@ -22,7 +25,7 @@ void Input::framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void Input::processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera)
+void Input::processCameraInput(GLFWwindow *window, double dt, IFS &state, Camera &camera)
 {
     double cameraSpeed = camera.BASE_PAN_SPEED *  camera.orthoSize * dt;
     
@@ -124,7 +127,7 @@ void Input::processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double d
     cam.cameraUp    = up;
 }
 
-void Input::processCamera(GLFWwindow* window, UI ui, Renderer renderer)
+void Input::processCamera(GLFWwindow* window, UI& ui, Renderer& renderer)
 {
     int fb_w = 0, fb_h = 0;
     glfwGetFramebufferSize(window, &fb_w, &fb_h);
@@ -175,7 +178,7 @@ void Input::processCamera(GLFWwindow* window, UI ui, Renderer renderer)
     camera.view = glm::lookAt(camera.cameraPos,
                             camera.cameraPos + camera.cameraFront,
                             camera.cameraUp);
-                        processCameraInput(window, renderer.deltaTime, vars, renderer.ifs.state, camera);
+                        processCameraInput(window, renderer.deltaTime, renderer.ifs, camera);
 }
 
 void Input::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
@@ -208,12 +211,12 @@ void Input::setCallbacks(GLFWwindow* window)
     glfwSetScrollCallback(window, Input::scroll_callback);
 }
 
-void Input::handleEvents(GLFWwindow *window, IFS ifs, Renderer renderer, UI ui)
+void Input::handleEvents(GLFWwindow *window, IFS ifs, Renderer &renderer, UI &ui)
 {
     glfwPollEvents();
     processInput(window, vars);
     if (!camera.perspective) {
-        processCameraInput(window, renderer.deltaTime, vars, ifs.state, camera);
+        processCameraInput(window, renderer.deltaTime, renderer.ifs, camera);
     } else {
         processCameraInput3D(window, ImGui::GetIO(), renderer.deltaTime, camera);
     }

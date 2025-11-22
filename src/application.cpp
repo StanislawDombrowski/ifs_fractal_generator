@@ -48,9 +48,13 @@ GLFWwindow* Application::Init(){
 
 void Application::Run(GLFWwindow *window){
     while (!glfwWindowShouldClose(window)){
+        ui.BeginFrame();
         input.handleEvents(window, ifs, renderer, ui);
-        ui.renderUI(ifs, renderer, input, window);
+        ui.drawFrame(ifs, renderer, input, window);
         renderer.render(window, input);
+        ui.EndFrame();
+
+        glfwSwapBuffers(window);
     }
 
     glfwDestroyWindow(window);

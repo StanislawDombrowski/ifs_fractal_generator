@@ -126,11 +126,6 @@ void Renderer::render(GLFWwindow* window, Input input)
 
     glBindVertexArray(ifs.state.history[draw_index].vao);
     glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
-
-
-    ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     
-    glfwSwapBuffers(window);
 }
 
