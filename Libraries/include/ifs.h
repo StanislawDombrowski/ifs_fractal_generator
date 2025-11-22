@@ -26,6 +26,7 @@ struct GenerationData {
 
 struct ifs_state{
     int num_of_transforms;
+    int draw_index;
     std::vector<GenerationData> history;
 };
 

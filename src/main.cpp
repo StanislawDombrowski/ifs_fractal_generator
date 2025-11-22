@@ -65,8 +65,6 @@ int main(){
     UI ui;
     Input inputs;
 
-    ui.vp = ui.initUI();
-
     // glfwSetWindowUserPointer(window, &camera);
 
     // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);     
@@ -94,6 +92,8 @@ int main(){
 
     renderer.shader = renderer.initShaders(sources, types);
     ifs.generationShader = ifs.initShaders(generateSources, generateTypes);
+
+    ifs.init_genesis(ifs.state, ifs.data.points);
 
     app.ifs = ifs;
     app.renderer = renderer;

@@ -211,7 +211,7 @@ void Input::setCallbacks(GLFWwindow* window)
     glfwSetScrollCallback(window, Input::scroll_callback);
 }
 
-void Input::handleEvents(GLFWwindow *window, IFS ifs, Renderer &renderer, UI &ui)
+void Input::handleEvents(GLFWwindow *window, IFS &ifs, Renderer &renderer, UI &ui)
 {
     glfwPollEvents();
     processInput(window, vars);

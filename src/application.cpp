@@ -51,7 +51,7 @@ void Application::Run(GLFWwindow *window){
         ui.BeginFrame();
         input.handleEvents(window, ifs, renderer, ui);
         ui.drawFrame(ifs, renderer, input, window);
-        renderer.render(window, input);
+        renderer.render(window, input, ifs);
         ui.EndFrame();
 
         glfwSwapBuffers(window);

@@ -91,7 +91,7 @@ float Renderer::calculateDeltaTime(double deltaTime)
     return deltaTime;
 }
 
-void Renderer::sendData(Input input)
+void Renderer::sendData(Input &input)
 {
     glUseProgram(shader);
     glUniformMatrix4dv(glGetUniformLocation(shader, "projection"),
@@ -100,7 +100,7 @@ void Renderer::sendData(Input input)
                             1, GL_FALSE, glm::value_ptr(input.camera.view));
 }
 
-int Renderer::calculateDrawIndex(Input input)
+int Renderer::calculateDrawIndex(Input &input, const IFS& ifs)
 {
     double target_points = (1.0 / (input.camera.orthoSize * input.camera.orthoSize)) * 5000000.0 * detailFactor;
     int draw_index = 0;
@@ -115,17 +115,21 @@ int Renderer::calculateDrawIndex(Input input)
     return draw_index;
 }
 
-void Renderer::render(GLFWwindow* window, Input input)
+void Renderer::render(GLFWwindow* window, Input &input, IFS& ifs)
 {
     deltaTime = calculateDeltaTime(deltaTime);
     sendData(input);
-    int draw_index = calculateDrawIndex(input);
+    int draw_index = calculateDrawIndex(input, ifs);
+    ifs.state.draw_index = draw_index;
 
     glDisable(GL_BLEND); 
     glDisable(GL_DEPTH_TEST);
 
-    glBindVertexArray(ifs.state.history[draw_index].vao);
-    glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
+    if (!ifs.state.history.empty()) { // Safety check
+        glBindVertexArray(ifs.state.history[draw_index].vao);
+        std::cout << ifs.state.history[draw_index].point_count << std::endl;
+        glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
+    }
     
 }
 

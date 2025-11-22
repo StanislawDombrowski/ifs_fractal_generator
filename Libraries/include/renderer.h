@@ -38,9 +38,9 @@ public:
 
     float calculateDeltaTime(double deltaTime);
 
-    void sendData(Input input);
-    int calculateDrawIndex(Input input);
+    void sendData(Input &input);
+    int calculateDrawIndex(Input &input, const IFS& ifs);
 
-    void render(GLFWwindow* window, Input input);
+    void render(GLFWwindow* window, Input &input, IFS& ifs);
 };
 

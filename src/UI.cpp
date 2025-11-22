@@ -12,6 +12,10 @@ UI::UI(){
                     ImGuiWindowFlags_NoBringToFrontOnFocus |
                     ImGuiWindowFlags_NoNavFocus |
                     ImGuiWindowFlags_NoBackground;
+
+    built = false;
+    dock_right = 0;
+    dock_left = 0;
 }
 
 UI::~UI(){
@@ -36,10 +40,6 @@ ImGuiViewport* UI::initUI(){
         ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_PassthruCentralNode;
         dockspace_id = ImGui::GetID("MyDockSpace");
         ImGui::DockSpace(dockspace_id, ImVec2(0, 0), dockspace_flags);
-
-        built = false;
-        dock_right = 0;
-        dock_left = 0;
 
         return vp;
 }
@@ -89,8 +89,14 @@ void UI::drawFrame(IFS &ifs, Renderer &renderer, Input &input, GLFWwindow* windo
 
             int generation = ifs.state.history.size();
         
-            ImGui::Text("Generations: %d", generation);
-            ImGui::Text("Total Points: %d", ifs.state.history.at(generation).point_count);
+            if (!ifs.state.history.empty()) {
+                ImGui::Text("Generations: %d", (int)ifs.state.history.size());
+                // .back() gets the last element
+                ImGui::Text("Total Points: %d", ifs.state.history.back().point_count);
+            } else {
+                ImGui::Text("Generations: 0");
+                ImGui::Text("Total Points: 0");
+            }
             ImGui::Separator();
             if (ImGui::Button("Generate Next Level")) {
                 generation++;

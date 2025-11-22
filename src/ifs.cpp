@@ -102,6 +102,8 @@ void IFS::generate_points(int depth, ifs_state &state, unsigned int program) {
         glEndTransformFeedback();
         glEndQuery(GL_PRIMITIVES_GENERATED);
 
+        state.history.at(state.draw_index).point_count *= state.num_of_transforms;
+
         // 6. Verify Output
         GLuint primitives_written = 0;
         glGetQueryObjectuiv(query, GL_QUERY_RESULT, &primitives_written);

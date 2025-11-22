@@ -79,7 +79,7 @@ public:
 
     void setCallbacks(GLFWwindow* window);
 
-    void handleEvents(GLFWwindow *window, IFS ifs, Renderer &renderer, UI &ui);
+    void handleEvents(GLFWwindow *window, IFS& ifs, Renderer &renderer, UI &ui);
 };
 
 
