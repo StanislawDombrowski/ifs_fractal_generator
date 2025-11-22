@@ -1,6 +1,14 @@
 #include "ifs.h"
 #include <stdexcept>
 
+IFS::IFS(){
+
+}
+
+IFS::~IFS(){
+    
+}
+
 // --- Helper: Allocates buffers for a new generation ---
 GenerationData allocate_new_generation(int count) {
     GenerationData gen;

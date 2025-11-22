@@ -1,19 +1,28 @@
 #include "input.h"
 
+Input::Input()
+{
 
-void processInput(GLFWwindow *window, input_variables &variables)
+}
+
+Input::~Input()
+{
+
+}
+
+void Input::processInput(GLFWwindow *window, input_variables &variables)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
 }
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void Input::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
-}  
+}
 
-void processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera)
+void Input::processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera)
 {
     double cameraSpeed = camera.BASE_PAN_SPEED *  camera.orthoSize * dt;
     
@@ -38,7 +47,7 @@ void processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, 
         camera.orthoSize /= zoomSensitivity;
 }
 
-void processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Camera& cam) {
+void Input::processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Camera& cam) {
     if (!cam.perspective) return;
 
     // If UI is capturing mouse, don't move camera
@@ -115,7 +124,61 @@ void processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Came
     cam.cameraUp    = up;
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void Input::processCamera(GLFWwindow* window, UI ui, Renderer renderer)
+{
+    int fb_w = 0, fb_h = 0;
+    glfwGetFramebufferSize(window, &fb_w, &fb_h);
+
+    float sx = (ui.vp->Size.x > 0.0f) ? (float)fb_w / ui.vp->Size.x : 1.0f;
+    float sy = (ui.vp->Size.y > 0.0f) ? (float)fb_h / ui.vp->Size.y : 1.0f;
+
+    ImGuiDockNode* left_node = ImGui::DockBuilderGetNode(ui.dock_left);
+
+    // Fallback: whole work area if node is not ready
+    ImVec2 pos  = left_node ? left_node->Pos  : ui.vp->WorkPos;
+    ImVec2 size = left_node ? left_node->Size : ui.vp->WorkSize;
+
+    // Convert to framebuffer pixels
+    int vx = (int)std::floor(pos.x * sx);
+    int vy_top = (int)std::floor(pos.y * sy);
+    int vw = (int)std::floor(size.x * sx);
+    int vh = (int)std::floor(size.y * sy);
+    int vy = fb_h - (vy_top + vh); // flip Y
+
+    // 1) Clear full framebuffer once
+    glDisable(GL_SCISSOR_TEST);
+    glViewport(0, 0, fb_w, fb_h);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // 2) Clear only the left region (one time), then disable scissor
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(vx, vy, vw, vh);
+    glClearColor(58.0f / 255.0f, 61.0f / 255.0f, 59.0f / 255.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_SCISSOR_TEST);
+
+    // 3) Draw into left region
+    glViewport(vx, vy, vw, vh);
+    glDisable(GL_DEPTH_TEST); // optional, safer for point cloud
+    // Use aspect from vw/vh
+    float aspectRatio = (vh > 0) ? (float)vw / (float)vh : 1.0f;
+    if (camera.perspective) {
+        double ar = (double)aspectRatio;
+        camera.projection = glm::perspective(glm::radians(camera.fov_deg), ar, camera.nearPlane, camera.farPlane);
+    } else {
+        camera.projection = glm::ortho(-camera.orthoSize * aspectRatio,
+                             camera.orthoSize * aspectRatio,
+                            -camera.orthoSize, camera.orthoSize,
+                            -1.0, 1.0);
+    }
+    camera.view = glm::lookAt(camera.cameraPos,
+                            camera.cameraPos + camera.cameraFront,
+                            camera.cameraUp);
+                        processCameraInput(window, renderer.deltaTime, vars, renderer.ifs.state, camera);
+}
+
+void Input::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
     const float zoomSensitivity = 0.90f; // Must be < 1.0 for zooming in
@@ -134,4 +197,25 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
     if (camera->orthoSize > 100.0f) {
         camera->orthoSize = 100.0f;
     }
+}
+
+void Input::setCallbacks(GLFWwindow* window)
+{
+    
+    glfwSetWindowUserPointer(window, &camera);
+
+    glfwSetFramebufferSizeCallback(window, Input::framebuffer_size_callback);     
+    glfwSetScrollCallback(window, Input::scroll_callback);
+}
+
+void Input::handleEvents(GLFWwindow *window, IFS ifs, Renderer renderer, UI ui)
+{
+    glfwPollEvents();
+    processInput(window, vars);
+    if (!camera.perspective) {
+        processCameraInput(window, renderer.deltaTime, vars, ifs.state, camera);
+    } else {
+        processCameraInput3D(window, ImGui::GetIO(), renderer.deltaTime, camera);
+    }
+    processCamera(window, ui, renderer);
 }

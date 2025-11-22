@@ -52,11 +52,5 @@ public:
     void update_IFS_data(ifs_state &state, std::vector<glm::dmat4> transforms, unsigned int program);
 };
 
-IFS::IFS(){
 
-}
-
-IFS::~IFS(){
-    
-}
 

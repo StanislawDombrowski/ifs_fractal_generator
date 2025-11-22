@@ -11,6 +11,7 @@
 #include "ifs.h"
 #include "renderer.h"
 #include "input.h"
+#include "UI.h"
 
 class Application
 {
@@ -18,21 +19,15 @@ private:
     /* data */
 public:
     Renderer renderer;
-    IFS state;
+    IFS ifs;
+    Input input;
+    UI ui;
 
     Application(/* args */);
     ~Application();
 
     GLFWwindow* Init();
-    void Run();
+
+    void Run(GLFWwindow *window);
 };
-
-Application::Application(/* args */)
-{
-}
-
-Application::~Application()
-{
-}
-
 

@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include "ifs.h"
+#include "UI.h"
+#include "renderer.h"
 
 struct Camera{
     // Camera setup
@@ -16,7 +18,7 @@ struct Camera{
     glm::dvec3 cameraUp    = glm::dvec3(0.0, 1.0, 0.0);
 
     double orthoSize = 4.0f;
-    const double BASE_PAN_SPEED = 1.5f;
+    double BASE_PAN_SPEED = 1.5f;
 
     bool perspective = false;
 
@@ -41,6 +43,8 @@ struct Camera{
     double rotate_sens = 0.2;   // deg per pixel
     double pan_sens = 0.0015;   // world units per pixel scaled by distance
     double dolly_sens = 1.05;   // multiplicative distance zoom
+
+    glm::dmat4 projection, view;
 };
 
 struct input_variables
@@ -58,14 +62,21 @@ public:
 
     Input();
     ~Input();
+
+    void processInput(GLFWwindow *window, input_variables &variables);
+    void processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera);
+    void processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Camera& cam);
+
+    void processCamera(GLFWwindow* window, UI ui, Renderer renderer);
+
+    static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+
+    void setCallbacks(GLFWwindow* window);
+
+    void handleEvents(GLFWwindow *window, IFS ifs, Renderer renderer, UI ui);
 };
 
-void processInput(GLFWwindow *window, input_variables &variables);
-void processCameraInput(GLFWwindow *window, double dt, input_variables &inputs, ifs_state &state, Camera &camera);
-void processCameraInput3D(GLFWwindow* window, const ImGuiIO& io, double dt, Camera& cam);
 
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 

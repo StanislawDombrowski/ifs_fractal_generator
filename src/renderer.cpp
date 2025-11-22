@@ -1,5 +1,12 @@
 #include "renderer.h"
 
+Renderer::Renderer(){
+
+}
+
+Renderer::~Renderer(){
+    
+}
 unsigned int Renderer::initShaders(std::vector<std::string> sourcesPath, std::vector<GLenum> types){
     unsigned int shader;
 
@@ -75,5 +82,55 @@ void Renderer::fillVBO(unsigned int VBO, std::vector<glm::dvec4> points){
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+float Renderer::calculateDeltaTime(double deltaTime)
+{
+    double now = glfwGetTime();
+    deltaTime = now - lastFrame;
+    lastFrame = now;
 
+    return deltaTime;
+}
+
+void Renderer::sendData(Input input)
+{
+    glUseProgram(shader);
+    glUniformMatrix4dv(glGetUniformLocation(shader, "projection"),
+                            1, GL_FALSE, glm::value_ptr(input.camera.projection));
+    glUniformMatrix4dv(glGetUniformLocation(shader, "view"),
+                            1, GL_FALSE, glm::value_ptr(input.camera.view));
+}
+
+int Renderer::calculateDrawIndex(Input input)
+{
+    double target_points = (1.0 / (input.camera.orthoSize * input.camera.orthoSize)) * 5000000.0 * detailFactor;
+    int draw_index = 0;
+    for(int i = 0; i < ifs.state.history.size(); i++) {
+        if(ifs.state.history[i].point_count > target_points) {
+            draw_index = i;
+            break; // Found a generation with enough detail
+        }
+        draw_index = i; // Default to the highest available if we never exceed target
+    }
+
+    return draw_index;
+}
+
+void Renderer::render(GLFWwindow* window, Input input)
+{
+    deltaTime = calculateDeltaTime(deltaTime);
+    sendData(input);
+    int draw_index = calculateDrawIndex(input);
+
+    glDisable(GL_BLEND); 
+    glDisable(GL_DEPTH_TEST);
+
+    glBindVertexArray(ifs.state.history[draw_index].vao);
+    glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
+
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    
+    glfwSwapBuffers(window);
+}
 

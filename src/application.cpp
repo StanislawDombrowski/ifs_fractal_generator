@@ -1,5 +1,15 @@
 #include "application.h"
 
+Application::Application(/* args */)
+{
+}
+
+Application::~Application()
+{
+}
+
+
+
 GLFWwindow* Application::Init(){
     glfwInit();
 
@@ -36,6 +46,13 @@ GLFWwindow* Application::Init(){
     return window;
 }
 
-void Application::Run(){
+void Application::Run(GLFWwindow *window){
+    while (!glfwWindowShouldClose(window)){
+        input.handleEvents(window, ifs, renderer, ui);
+        ui.renderUI(ifs, renderer, input, window);
+        renderer.render(window, input);
+    }
 
+    glfwDestroyWindow(window);
+    glfwTerminate();
 }

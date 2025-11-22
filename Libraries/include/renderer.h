@@ -7,6 +7,7 @@
 
 #include "shaders.h"
 #include "ifs.h"
+#include "input.h"
 
 #include <vector>
 #include <array>
@@ -19,6 +20,9 @@ using glm::dvec4;
 class Renderer {
 public:
     unsigned int shader;
+    double deltaTime;
+    double detailFactor;
+    double lastFrame;
     IFS ifs;
 
     Renderer();
@@ -31,12 +35,12 @@ public:
     std::array<unsigned int, 2> initTFOs(std::array<unsigned int, 2> VBOs);
 
     void fillVBO(unsigned int VBO, std::vector<glm::dvec4> points);
+
+    float calculateDeltaTime(double deltaTime);
+
+    void sendData(Input input);
+    int calculateDrawIndex(Input input);
+
+    void render(GLFWwindow* window, Input input);
 };
 
-Renderer::Renderer(){
-
-}
-
-Renderer::~Renderer(){
-    
-}
