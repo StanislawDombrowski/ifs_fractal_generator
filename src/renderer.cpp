@@ -120,14 +120,13 @@ void Renderer::render(GLFWwindow* window, Input &input, IFS& ifs)
     deltaTime = calculateDeltaTime(deltaTime);
     sendData(input);
     int draw_index = calculateDrawIndex(input, ifs);
-    ifs.state.draw_index = draw_index;
 
     glDisable(GL_BLEND); 
     glDisable(GL_DEPTH_TEST);
 
     if (!ifs.state.history.empty()) { // Safety check
         glBindVertexArray(ifs.state.history[draw_index].vao);
-        std::cout << ifs.state.history[draw_index].point_count << std::endl;
+        //std::cout << draw_index << std::endl;
         glDrawArrays(GL_POINTS, 0, ifs.state.history[draw_index].point_count);
     }
     

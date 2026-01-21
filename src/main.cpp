@@ -62,8 +62,11 @@ int main(){
 
     IFS ifs;
     Renderer renderer;
+    renderer.detailFactor = 5.0;
     UI ui;
     Input inputs;
+
+    inputs.setCallbacks(window);
 
     // glfwSetWindowUserPointer(window, &camera);
 
@@ -135,10 +138,22 @@ int main(){
     unsigned int generation = 0;
 
     // Tell the geometry shader which data to capture
-    const char* feedbackVaryings[] = {"out_Pos"}; // Name of the variable to capture
+// Tell the geometry shader which data to capture
+    const char* feedbackVaryings[] = { "out_Pos" }; 
     glTransformFeedbackVaryings(ifs.generationShader, 1, feedbackVaryings, GL_INTERLEAVED_ATTRIBS);
-    glLinkProgram(ifs.generationShader); // Relink the program required
+    
+    // Relink the program
+    glLinkProgram(ifs.generationShader); 
 
+    // --- ERROR CHECKING ---
+    int success;
+    char infoLog[512];
+    glGetProgramiv(ifs.generationShader, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(ifs.generationShader, 512, nullptr, infoLog);
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED_TFO\n" << infoLog << std::endl;
+    }
+    // ----------------------
 
     // Using the generation program
     glUseProgram(ifs.generationShader);
@@ -157,7 +172,6 @@ int main(){
 
     renderer.deltaTime = 0.0;
     renderer.lastFrame = 0.0;
-    renderer.detailFactor = 1.0;
 
     glPointSize(1.0f);
     glUseProgram(renderer.shader); // Use the program for drawing

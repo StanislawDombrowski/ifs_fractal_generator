@@ -20,6 +20,27 @@ void Input::processInput(GLFWwindow *window, input_variables &variables)
 
 }
 
+void Input::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
+    const float zoomSensitivity = 0.90f; // Must be < 1.0 for zooming in
+
+    if (yoffset > 0) {
+        // Zoom in by multiplying by a factor < 1
+        camera->orthoSize *= zoomSensitivity;
+    }
+    else if (yoffset < 0) {
+        // Zoom out by dividing by the same factor
+        camera->orthoSize /= zoomSensitivity;
+    }
+
+    // We no longer need to clamp the minimum zoom, as it will never reach zero.
+    // But it's still wise to clamp the maximum to prevent the user from getting lost.
+    if (camera->orthoSize > 100.0f) {
+        camera->orthoSize = 100.0f;
+    }
+}
+
 void Input::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -43,7 +64,7 @@ void Input::processCameraInput(GLFWwindow *window, double dt, IFS &state, Camera
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.cameraPos += glm::normalize(glm::cross(camera.cameraFront, camera.cameraUp)) * cameraSpeed;
 
-    const float zoomSensitivity = 0.90f;
+    const float zoomSensitivity = 1.05f;
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
         camera.orthoSize *= zoomSensitivity;
     if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
@@ -181,30 +202,8 @@ void Input::processCamera(GLFWwindow* window, UI& ui, Renderer& renderer)
                         processCameraInput(window, renderer.deltaTime, renderer.ifs, camera);
 }
 
-void Input::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    Camera* camera = static_cast<Camera*>(glfwGetWindowUserPointer(window));
-    const float zoomSensitivity = 0.90f; // Must be < 1.0 for zooming in
-
-    if (yoffset > 0) {
-        // Zoom in by multiplying by a factor < 1
-        camera->orthoSize *= zoomSensitivity;
-    }
-    else if (yoffset < 0) {
-        // Zoom out by dividing by the same factor
-        camera->orthoSize /= zoomSensitivity;
-    }
-
-    // We no longer need to clamp the minimum zoom, as it will never reach zero.
-    // But it's still wise to clamp the maximum to prevent the user from getting lost.
-    if (camera->orthoSize > 100.0f) {
-        camera->orthoSize = 100.0f;
-    }
-}
-
 void Input::setCallbacks(GLFWwindow* window)
 {
-    
     glfwSetWindowUserPointer(window, &camera);
 
     glfwSetFramebufferSizeCallback(window, Input::framebuffer_size_callback);     
